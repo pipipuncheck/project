@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Artist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+<h1>Add New Artist</h1>
+<form id="artist-form">
+    <label for="name">Artist Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="genre">Genre:</label><br>
+    <input type="text" id="genre" name="genre" required><br><br>
+
+    <label for="description">Description:</label><br>
+    <textarea id="description" name="description" required></textarea><br><br>
+
+    <div class="button-container">
+        <button type="submit">Add Artist</button>
+    </div>
+</form>
+
+<script>
+
+    // Обработчик отправки формы для добавления артиста
+    document.getElementById("artist-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = {
+            name: document.getElementById("name").value,
+            genre: document.getElementById("genre").value,
+            description: document.getElementById("description").value,
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/manager/new_artist", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                alert("Artist successfully added!");
+                // Автоматический редирект на страницу добавления события
+                window.location.href = "add-event.html";
+            } else {
+                throw new Error("Failed to add artist");
+            }
+        } catch (error) {
+            console.error("Error adding artist:", error);
+            alert("An error occurred. Please try again.");
+        }
+    });
+</script>
+</body>
+</html>

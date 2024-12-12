@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    #ticket-list li {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: auto;
+      background-color: #f9f9f9;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 300px;
+      height: 100%;
+      background-color: #f9f9f9;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      transition: right 0.3s ease;
+      padding: 20px;
+    }
+
+    #sidebar h2 {
+      margin-top: 0;
+    }
+
+    #toggle-sidebar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #toggle-sidebar:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<h1>User Profile</h1>
+<p><strong>Username:</strong> <span id="username"></span></p>
+<p><strong>Email:</strong> <span id="email"></span></p>
+<h2>Your Tickets:</h2>
+<ul id="ticket-list"></ul>
+
+<!-- Кнопка для бэкапа, только для администраторов -->
+<button id="backup-button" style="display: none;">Backup</button>
+
+<!-- Добавлена кнопка Add Event -->
+<button id="add-event-button" style="display: none;">Add Event</button>
+<!-- Кнопка для перехода на страницу с прошедшими билетами -->
+<button id="expired-tickets-button">View Expired Tickets</button>
+<!-- Кнопка для перехода на страницу со всеми пользователями -->
+<button id="show-all-users-button" style="display: none;">Show All Users</button>
+<button id="logout-button">Logout</button>
+
+<div id="sidebar">
+  <h2>Event Calendar</h2>
+  <div id="calendar">
+    <label for="date">Choose a date:</label>
+    <input type="date" id="date" />
+    <button onclick="loadEvents()">Check Events</button>
+  </div>
+  <div id="events"></div>
+</div>
+
+<button id="toggle-sidebar">Select Event</button>
+
+<script>
+  const sidebar = document.getElementById("sidebar");
+  const toggleSidebarButton = document.getElementById("toggle-sidebar");
+
+  toggleSidebarButton.addEventListener("click", () => {
+    if (sidebar.style.right === "0px") {
+      sidebar.style.right = "-300px";
+    } else {
+      sidebar.style.right = "0px";
+    }
+  });
+
+  const accessToken = localStorage.getItem("accessToken");
+
+  if (!accessToken) {
+    alert("You need to log in first!");
+    window.location.href = "../auth/login.html";
+  }
+
+  // Загружаем информацию о пользователе
+  fetch("http://localhost:8080/user", {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`
+    }
+  })
+          .then(response => {
+            if (!response.ok) throw new Error("Failed to fetch user info");
+            return response.json();
+          })
+          .then(data => {
+            document.getElementById("username").textContent = data.username;
+            document.getElementById("email").textContent = data.email;
+
+            // Отображаем кнопку Add Event, если роль manager или admin
+            if (data.role === "MANAGER" || data.role === "ADMIN") {
+              document.getElementById("add-event-button").style.display = "block";
+            }
+
+            // Отображаем кнопку Show All Users, если роль admin
+            if (data.role === "ADMIN") {
+              document.getElementById("show-all-users-button").style.display = "block";
+              document.getElementById("backup-button").style.display = "block";  // Показываем кнопку бэкапа
+            }
+          })
+          .catch(error => {
+            console.error(error);
+            alert("Error loading profile data");
+          });
+
+  // Загружаем билеты пользователя
+  fetch("http://localhost:8080/user/tickets", {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`
+    }
+  })
+          .then(response => {
+            if (!response.ok) throw new Error("Failed to fetch tickets");
+            return response.json();
+          })
+          .then(tickets => {
+            const ticketList = document.getElementById("ticket-list");
+            tickets.forEach(ticket => {
+              const listItem = document.createElement("li");
+              listItem.innerHTML = `
+        <strong>Event Name:</strong> ${ticket.eventName}<br>
+        <strong>Date:</strong> ${ticket.date}<br>
+        <strong>Start Time:</strong> ${ticket.startTime}<br>
+        <strong>End Time:</strong> ${ticket.endTime}<br>
+        <strong>Location:</strong> ${ticket.location}<br>
+      `;
+              ticketList.appendChild(listItem);
+            });
+          })
+          .catch(error => {
+            console.error(error);
+            alert("Error loading tickets");
+          });
+
+  // Переход на страницу с прошедшими билетами
+  document.getElementById("expired-tickets-button").addEventListener("click", () => {
+    window.location.href = "expired-tickets.html";
+  });
+
+  // Переход на страницу добавления события
+  document.getElementById("add-event-button").addEventListener("click", () => {
+    window.location.href = "../manager/add-event.html";
+  });
+
+  document.getElementById("show-all-users-button").addEventListener("click", () => {
+    window.location.href = "../admin/all-users.html";
+  });
+
+  // Загружаем мероприятия для выбранной даты
+  async function loadEvents() {
+    const date = document.getElementById("date").value;
+    if (!date) {
+      alert("Please select a date!");
+      return;
+    }
+
+    const token = localStorage.getItem("accessToken");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+
+    try {
+      const response = await fetch(`http://localhost:8080/user/schedule/${date}`, { headers });
+      if (!response.ok) throw new Error("Failed to load events");
+      const events = await response.json();
+
+      const eventsDiv = document.getElementById("events");
+      eventsDiv.innerHTML = `<h3>Events on ${date}:</h3>`;
+      events.forEach(event => {
+        const eventDiv = document.createElement("div");
+        eventDiv.innerHTML = `
+          <p><strong>${event.name}</strong></p>
+          <p>Time: ${event.startTime} - ${event.endTime}</p>
+          <p>Location: ${event.location}</p>
+          <button onclick="showEventDetails('${event.name}')">Show More</button>
+        `;
+        eventsDiv.appendChild(eventDiv);
+      });
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  // Переход на страницу с подробной информацией об ивенте
+  function showEventDetails(eventName) {
+    window.location.href = `event-details.html?event_name=${eventName}`;
+  }
+
+  // Выход из аккаунта
+  document.getElementById("logout-button").addEventListener("click", () => {
+    localStorage.removeItem("accessToken");
+    alert("Logged out successfully!");
+    window.location.href = "../auth/login.html";
+  });
+
+  // Обработчик для кнопки backup
+  document.getElementById("backup-button").addEventListener("click", () => {
+    fetch("http://localhost:8080/admin/backup", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
+    })
+            .then(response => response.text())
+            .then(message => {
+              alert(message);  // Показываем сообщение о результате бэкапа
+            })
+            .catch(error => {
+              console.error(error);
+              alert("Error performing backup");
+            });
+  });
+</script>
+</body>
+</html>

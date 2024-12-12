@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Users</title>
+    <style>
+        /* Ваши стили для страницы списка пользователей */
+        .user-item {
+            margin: 10px 0;
+        }
+
+        .user-item span {
+            cursor: pointer;
+            color: #007bff;
+        }
+
+        .user-item span:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h1>All Users</h1>
+
+<div id="user-list"></div>
+
+<script>
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+        alert("You need to log in first!");
+        window.location.href = "../auth/login.html";
+    }
+
+    // Загружаем всех пользователей
+    fetch("http://localhost:8080/admin/users", {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    })
+        .then(response => response.json())
+        .then(users => {
+            const userListDiv = document.getElementById("user-list");
+            userListDiv.innerHTML = ""; // Очищаем список пользователей
+
+            users.forEach(user => {
+                const userDiv = document.createElement("div");
+                userDiv.classList.add("user-item");
+                userDiv.innerHTML = `
+        <span onclick="viewUserDetails(${user.id})">${user.username}</span> - ${user.email}
+      `;
+                userListDiv.appendChild(userDiv);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Error loading users");
+        });
+
+    // Переход на страницу с подробной информацией о пользователе
+    function viewUserDetails(userId) {
+        window.location.href = `user-details.html?id=${userId}`;
+    }
+</script>
+
+</body>
+</html>

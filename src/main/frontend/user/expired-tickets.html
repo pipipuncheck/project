@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expired Tickets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #ticket-list li {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: auto;
+            background-color: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+<h1>Expired Tickets</h1>
+<ul id="ticket-list"></ul>
+
+<script>
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+        alert("You need to log in first!");
+        window.location.href = "../auth/login.html";
+    }
+
+    // Загружаем прошедшие билеты пользователя
+    fetch("http://localhost:8080/user/expired_tickets", {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to fetch expired tickets");
+            return response.json();
+        })
+        .then(tickets => {
+            const ticketList = document.getElementById("ticket-list");
+            tickets.forEach(ticket => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `
+                    <strong>Event Name:</strong> ${ticket.eventName}<br>
+                    <strong>Date:</strong> ${ticket.date}<br>
+                    <strong>Start Time:</strong> ${ticket.startTime}<br>
+                    <strong>End Time:</strong> ${ticket.endTime}<br>
+                    <strong>Location:</strong> ${ticket.location}<br>
+                    <strong>Artist:</strong>
+                    <a href="artist-info.html?artistId=${ticket.artist.id}">
+                        ${ticket.artist.name}
+                    </a>
+                `;
+                ticketList.appendChild(listItem);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Error loading expired tickets");
+        });
+</script>
+</body>
+</html>

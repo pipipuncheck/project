@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .event-info {
+            margin-bottom: 20px;
+        }
+
+        .event-info p {
+            font-size: 1.2em;
+        }
+
+        .artist-info {
+            margin-top: 20px;
+            border-top: 2px solid #ccc;
+            padding-top: 20px;
+        }
+
+        .artist-info p {
+            font-size: 1.1em;
+        }
+
+        #buy-ticket-button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #buy-ticket-button:hover {
+            background-color: #218838;
+        }
+
+        #go-back-button {
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        #go-back-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+<h1>Event Details</h1>
+<div id="event-details" class="event-info">
+    <p><strong>Event Name:</strong> <span id="event-name"></span></p>
+    <p><strong>Date:</strong> <span id="event-date"></span></p>
+    <p><strong>Time:</strong> <span id="event-time"></span></p>
+    <p><strong>Location:</strong> <span id="event-location"></span></p>
+</div>
+
+<div id="artist-details" class="artist-info">
+    <h3>Artist Information</h3>
+    <p><strong>Name:</strong> <span id="artist-name"></span></p>
+    <p><strong>Genre:</strong> <span id="artist-genre"></span></p>
+    <p><strong>Rating:</strong> <span id="artist-rating"></span></p>
+    <p><strong>Description:</strong> <span id="artist-description"></span></p>
+</div>
+
+<button id="buy-ticket-button" onclick="buyTicket()">Buy Ticket</button>
+
+<script>
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+        alert("You need to log in first!");
+        window.location.href = "login.html";
+    }
+
+    // Получаем параметр event_name из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventName = urlParams.get('event_name');
+
+    if (!eventName) {
+        alert("Event name is required");
+        window.location.href = "index.html"; // Или на другую страницу, если event_name не передан
+    }
+
+    // Загружаем подробную информацию о событии
+    fetch(`http://localhost:8080/user/schedule/check/${eventName}`, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to fetch event details");
+            return response.json();
+        })
+        .then(event => {
+            document.getElementById("event-name").textContent = event.name;
+            document.getElementById("event-date").textContent = event.date;
+            document.getElementById("event-time").textContent = `${event.startTime} - ${event.endTime}`;
+            document.getElementById("event-location").textContent = event.location;
+
+            // Информация о художнике
+            const artist = event.artist;
+            document.getElementById("artist-name").textContent = artist.name;
+            document.getElementById("artist-genre").textContent = artist.genre;
+            document.getElementById("artist-rating").textContent = artist.rating;
+            document.getElementById("artist-description").textContent = artist.description;
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Error loading event details");
+        });
+
+    // Функция покупки билета
+    function buyTicket() {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("You need to log in first!");
+            window.location.href = "../auth/login.html";
+            return;
+        }
+
+        fetch(`http://localhost:8080/user/schedule/check/${eventName}/buy_ticket`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to buy ticket");
+                alert("Ticket purchased successfully!");
+                window.location.href = "profile.html"; // Редиректим на страницу профиля
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+    }
+</script>
+</body>
+</html>

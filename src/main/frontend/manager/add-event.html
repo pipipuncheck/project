@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Event</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        #artist-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #artist-container span {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h1>Add New Event</h1>
+<form id="event-form">
+    <label for="name">Event Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <label for="artistName">Artist Name:</label><br>
+    <div id="artist-container">
+        <select id="artistName" name="artistName" required>
+            <option value="" disabled selected>Select an artist</option>
+        </select>
+        <span>or</span>
+        <button type="button" onclick="goToAddArtist()">Add Artist</button>
+    </div>
+    <br>
+
+    <label for="startTime">Start Time:</label><br>
+    <input type="time" id="startTime" name="startTime" required><br><br>
+
+    <label for="endTime">End Time:</label><br>
+    <input type="time" id="endTime" name="endTime" required><br><br>
+
+    <label for="location">Location:</label><br>
+    <input type="text" id="location" name="location" required><br><br>
+
+    <label for="date">Date:</label><br>
+    <input type="date" id="date" name="date" required><br><br>
+
+    <button type="submit">Add Event</button>
+</form>
+
+<script>
+    // Загружаем список артистов при загрузке страницы
+    async function loadArtists() {
+        const artistSelect = document.getElementById("artistName");
+        try {
+            const response = await fetch("http://localhost:8080/manager/artists", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch artists");
+            }
+
+            const artists = await response.json();
+            artists.forEach(artist => {
+                const option = document.createElement("option");
+                option.value = artist;
+                option.textContent = artist;
+                artistSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Error loading artists:", error);
+            alert("Failed to load artists. Please try again later.");
+        }
+    }
+
+    // Редирект на страницу добавления нового артиста
+    function goToAddArtist() {
+        window.location.href = "add-artist.html";
+    }
+
+    // Отправка данных о новом событии
+    document.getElementById("event-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const artistSelect = document.getElementById("artistName");
+
+        // Проверяем, чтобы пользователь не оставил опцию "Select an artist"
+        if (!artistSelect.value) {
+            alert("Please select an artist or add a new one.");
+            return;
+        }
+
+        const formData = {
+            name: document.getElementById("name").value,
+            artistName: artistSelect.value,
+            startTime: document.getElementById("startTime").value,
+            endTime: document.getElementById("endTime").value,
+            location: document.getElementById("location").value,
+            date: document.getElementById("date").value,
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/manager/new_event", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            } else {
+                alert("Event successfully added!");
+                window.location.href = "../user/profile.html";
+            }
+        } catch (error) {
+            console.error("Error adding event:", error);
+            alert("An error occurred. Please try again.");
+        }
+    });
+
+    // Загружаем артистов при загрузке страницы
+    document.addEventListener("DOMContentLoaded", loadArtists);
+</script>
+</body>
+</html>
