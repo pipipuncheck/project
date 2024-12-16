@@ -14,4 +14,5 @@ public class ArtistQuery {
     private String genre;
     private Integer rating;
     private String description;
+
 }

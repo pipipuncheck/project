@@ -154,7 +154,7 @@
         <strong>Date:</strong> ${ticket.date}<br>
         <strong>Start Time:</strong> ${ticket.startTime}<br>
         <strong>End Time:</strong> ${ticket.endTime}<br>
-        <strong>Location:</strong> ${ticket.location}<br>
+        <strong>Location:</strong> ${ticket.country}, ${ticket.city}, ${ticket.locationName}, ${ticket.address}<br>
       `;
               ticketList.appendChild(listItem);
             });
@@ -199,17 +199,18 @@
       events.forEach(event => {
         const eventDiv = document.createElement("div");
         eventDiv.innerHTML = `
-          <p><strong>${event.name}</strong></p>
-          <p>Time: ${event.startTime} - ${event.endTime}</p>
-          <p>Location: ${event.location}</p>
-          <button onclick="showEventDetails('${event.name}')">Show More</button>
-        `;
+        <p><strong>${event.name}</strong></p>
+        <p>Time: ${event.startTime} - ${event.endTime}</p>
+        <p>Location: ${event.locationName}</p>  <!-- Используем locationName -->
+        <button onclick="showEventDetails('${event.name}')">Show More</button>
+      `;
         eventsDiv.appendChild(eventDiv);
       });
     } catch (error) {
       alert(error.message);
     }
   }
+
 
   // Переход на страницу с подробной информацией об ивенте
   function showEventDetails(eventName) {

@@ -18,4 +18,8 @@ public class EventCommand {
     private LocalTime endTime;
     private String location;
     private LocalDate date;
+    private String country;
+    private String city;
+    private String locationName;
+    private String address;
 }

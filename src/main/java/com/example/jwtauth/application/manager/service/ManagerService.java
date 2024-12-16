@@ -32,7 +32,10 @@ public class ManagerService {
                 .artistId(artist.getId())
                 .startTime(eventCommand.getStartTime())
                 .endTime(eventCommand.getEndTime())
-                .location(eventCommand.getLocation())
+                .country(eventCommand.getCountry())
+                .city(eventCommand.getCity())
+                .locationName(eventCommand.getLocationName())
+                .address(eventCommand.getAddress())
                 .date(eventCommand.getDate())
                 .build();
         userRepository.save(event);

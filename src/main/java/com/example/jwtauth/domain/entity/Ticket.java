@@ -23,4 +23,9 @@ public class Ticket {
     private String location;
     private LocalDate date;
     private Artist artist;
+
+    private String country;
+    private String city;
+    private String locationName;
+    private String address;
 }

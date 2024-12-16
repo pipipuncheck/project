@@ -16,8 +16,12 @@ public class EventQuery {
     private String name;
     private LocalTime startTime;
     private LocalTime endTime;
-    private String location;
     private LocalDate date;
     private Artist artist;
+
+    private String country;
+    private String city;
+    private String locationName;
+    private String address;
 
 }

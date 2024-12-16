@@ -34,8 +34,16 @@ public class UserRepository {
     }
 
     public void save(Event event){
-        String sql = "insert into events(name, artist_id, start_time, end_time, location, date) VALUES(?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, event.getName(), event.getArtistId(), event.getStartTime(), event.getEndTime(), event.getLocation(), event.getDate());
+
+        String sql1 = "insert into locations(location_name, address, country, city) values(?, ?, ?, ?)";
+        jdbcTemplate.update(sql1, event.getLocationName(), event.getAddress(), event.getCountry(), event.getCity());
+
+        String sql2 = "SELECT id FROM locations WHERE name = ?";
+        Integer locationId = jdbcTemplate.queryForObject(sql2, Integer.class, event.getLocationName());
+
+
+        String sql = "insert into events(name, artist_id, start_time, end_time, date, location_id) VALUES(?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, event.getName(), event.getArtistId(), event.getStartTime(), event.getEndTime(), locationId, event.getDate());
     }
 
     public void save(Artist artist){
@@ -65,12 +73,27 @@ public class UserRepository {
 //    }
 
     private List<Event> listOfEvents(int userId) {
-        String sql = "SELECT e.id, e.name, e.artist_id, e.start_time, e.end_time, e.location, e.date\n" +
-                "FROM events e\n" +
-                "JOIN tickets t ON e.id = t.event_id\n" +
-                "WHERE t.user_id = ?\n";
+        String sql = "SELECT e.id, e.name, e.artist_id, e.start_time, e.end_time, e.date, " +
+                "l.country, l.city, l.location_name, l.address " +
+                "FROM events e " +
+                "JOIN tickets t ON e.id = t.event_id " +
+                "JOIN locations l ON e.location_id = l.id " +
+                "WHERE t.user_id = ?";
 
-        return jdbcTemplate.query(sql, new Object[]{userId}, new BeanPropertyRowMapper<>(Event.class));
+        return jdbcTemplate.query(sql, new Object[]{userId}, (rs, rowNum) ->
+                Event.builder()
+                        .id(rs.getInt("id"))
+                        .name(rs.getString("name"))
+                        .artistId(rs.getInt("artist_id"))
+                        .startTime(rs.getTime("start_time").toLocalTime())
+                        .endTime(rs.getTime("end_time").toLocalTime())
+                        .date(rs.getDate("date").toLocalDate())
+                        .country(rs.getString("country"))
+                        .city(rs.getString("city"))
+                        .locationName(rs.getString("location_name"))
+                        .address(rs.getString("address"))
+                        .build()
+        );
     }
 
     public List<Ticket> showAllTicketsByUsername(int userId){

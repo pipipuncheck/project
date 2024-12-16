@@ -4,6 +4,7 @@ import com.example.jwtauth.domain.entity.BackUp;
 import com.example.jwtauth.infrastructure.repository.BackUpRepository;
 import com.example.jwtauth.infrastructure.util.backup.DataBaseBackUp;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +17,13 @@ public class BackUpService {
     private final BackUpRepository backUpRepository;
     private final DataBaseBackUp dataBaseBackUp;
 
-    private String username = "postgres"; // имя пользователя для бд
-    private String dbName = "festival_management_system_db"; // название бд
+    @Value("${spring.datasource.username}")
+    private String username; // имя пользователя для бд
+    @Value("${backup.db.name}")
+    private String dbName; // название бд
     private String backupName = String.format("db_backup_%s.dump", LocalDate.now()); // название файла
-    private String filePath = String.format("C:/Users/Алексей/IdeaProjects/jwtauth/src/main/resources/backups/%s", backupName); // путь для сохранения файла
+    @Value("${backup.file.path}")
+    private String filePath; // путь для сохранения файла
     private String status;
     private String details;
 

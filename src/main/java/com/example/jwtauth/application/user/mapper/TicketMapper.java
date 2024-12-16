@@ -28,7 +28,7 @@ public class TicketMapper {
                 .eventName(event.getName())
                 .startTime(event.getStartTime())
                 .endTime(event.getEndTime())
-                .location(event.getLocation())
+//                .location(event.getLocation())
                 .date(event.getDate())
                 .artist(artist)
                 .build();
